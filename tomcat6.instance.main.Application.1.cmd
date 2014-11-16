@@ -1,0 +1,1 @@
+ant -v -Dproject=ws.gaia -Ddeployment=rec -Dcomponant=tomcat6 -Drole=instance -Dname=main  -Dhost=Application.1 %1%

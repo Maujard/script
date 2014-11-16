@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="macro">
+	<!--overwrite property's value-->
+    <macrodef name="set" >
+        <attribute name="name"/>
+        <attribute name="value"/>
+        <sequential>
+            <script language="javascript">
+                <![CDATA[
+                project.setProperty("@{name}", "@{value}");
+                ]]>
+            </script>
+        </sequential>
+    </macrodef>
+
+	</project>

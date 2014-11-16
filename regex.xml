@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." name="deploy" xmlns:if="ant:if" xmlns:props="antlib:org.apache.ant.props" xmlns:unless="ant:unless">
+	<!-- use antlib and tools -->
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	<typedef classpath="ant-props-1.0Alpha.jar" resource="org/apache/ant/props/antlib.xml" uri="antlib:org.apache.ant.props"/>
+	<propertyhelper>
+		<props:nested/>
+	</propertyhelper>
+	<description>tools for build conf and deployment</description>
+	
+	<property name="rff.int.host.Application.1.deployment" value="toto"/>
+	<property name="rff.rec.apache24.reverseProxy.standard.ip.1" value="titi"/>
+	<property name="rff..tomcat6.instance.main.web.sessiontimeout" value="titi"/>
+	
+	<property name="rff.rec.apache24.reverseProxy.standard.name=apache24" value="titi"/>
+	<property name="deployment" value="rec"/>
+	<property name="match" value=""/>
+	
+
+			<propertyselector match="^(rff\.\.[\w+\.]+\w+|rff\.rec\.[\w+\.]+\w+)" property="propertiesDefineByEnv" select="\1"/>
+			<echo message="@@@ ${propertiesDefineByEnv}" />
+			<for list="${propertiesDefineByEnv}" param="propertyToFind">
+				<sequential>
+				<propertyregex property="pack"
+              	input="@{propertyToFind}"
+              	regexp="^(rff\.[${deployment}]*\.).*"
+              	select="\1"
+              	override="yes"
+              	 />
+              	 <echo message="### ${pack}" />
+						<echo message="${pack} operation= value=${@{propertyToFind}}"/>
+				</sequential>
+			</for>
+</project>
+
+<!-- 
+	rff\.\.([\w+\.]+\w+)=|rff\.rec\.([\w+\.]+\w+)=|rff\.\.([\w+\.]+\w+\.\d)=|rff\.rec\.([\w+\.]+\w+\.\d).*$
+	rff\.rec\.([\w+\.]+\w+)=.*$
+
+	rff\.\.([\w+\.]+\w+\.\d)=.*$
+
+
+(rff\.\.[\w+\.]+\w+|rff\.rec\.[\w+\.]+\w+)
+
+-->

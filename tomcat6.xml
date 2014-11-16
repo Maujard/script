@@ -1,0 +1,168 @@
+<!-- tomcat6 -->
+<project basedir="." default="tomcat6.help" name="tomcat6" xmlns:if="ant:if" xmlns:unless="ant:unless">
+	<description>&quot;tomcat6 target&quot;</description>
+	<!--<property file="tomcat.properties"/><property environment="env"/>-->
+	<!--
+tout faire
+-->
+	<target depends="init,tomcat6.init,tomcat6.buildBySync" name="tomcat6.publish"/>
+	<!--
+sauvegarde de la buid en production dans le répertoire tomcat6.saveBefore 
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.saveBefore">
+		<delete dir="${working.saveBefore.location}"/>
+		<mkdir dir="${working.saveBefore.location}"/>
+		<sync todir="${working.saveBefore.location}">
+			<fileset dir="${rff.delivry.instance.location}">
+				<exclude name="work/"/>
+				<exclude name="temp/"/>
+			</fileset>
+		</sync>
+	</target>
+	<!--
+sauvegarde de la buid en production dans le répertoire saveAfter
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.saveAfter">
+		<delete dir="${working.saveAfter.location}"/>
+		<mkdir dir="${working.saveAfter.location}"/>
+		<sync todir="${working.saveAfter.location}">
+			<fileset dir="${rff.delivry.instance.location}">
+				<exclude name="work/"/>
+				<exclude name="temp/"/>
+			</fileset>
+		</sync>
+	</target>
+	<!--
+restauration de la tomcat6.saveBefore en  dans le répertoire de production de l'instance
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.restore">
+		<sync includeEmptyDirs="Yes" overwrite="Yes" todir="${rff.delivry.instance.location}">
+			<fileset dir="${working.saveBefore.location}/"/>
+			<preserveintarget preserveEmptyDirs="Yes">
+				<include name="**/work/**"/>
+				<include name="**/temp/**"/>
+			</preserveintarget>
+		</sync>
+		<mkdir dir="${rff.delivry.instance.location}/work"/>
+		<mkdir dir="${rff.delivry.instance.location}/temp"/>
+	</target>
+	<!--
+sauvegarde et 
+synchronisation du répertoire de l'instance avec le contenue de build
+-->
+	<target depends="init,tomcat6.buildSync" name="tomcat6.buildBySync"/>
+	<!--
+sauvegarde et 
+copie du contenue de build dans répertoire de l'instance.
+attention ne supprime pas les objets
+-->
+	<target depends="init,tomcat6.buildCopy" name="tomcat6.buildByCopy"/>
+	<!--
+synchronisation du répertoire de l'instance avec le contenue de build
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.buildSync">
+		<echo message="from ${rff.target.build.location} to ${rff.delivry.instance.location} "/>
+		<sync overwrite="Yes" todir="${rff.delivry.instance.location}">
+			<fileset dir="${rff.target.build.location}"/>
+			<preserveintarget preserveEmptyDirs="Yes">
+				<include name="**/logs/**"/>
+				<include name="**/work/**"/>
+				<include name="**/temp/**"/>
+			</preserveintarget>
+		</sync>
+	</target>
+	<!--
+synchronisation du répertoire de l'instance avec le contenue de build
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.buildCopy">
+		<copy todir="${rff.delivry.instance.location}">
+			<fileset dir="${rff.target.build.location}"/>
+		</copy>
+	</target>
+	<!--
+liste des objects
+-->
+	<target depends="init,tomcat6.init" name="dir">
+		<exec executable="cmd" output="${rff.logs.location}/list.txt">
+			<arg value="/c"/>
+			<arg value="DIR /s ${rff.delivry.instance.location}"/>
+		</exec>
+	</target>
+	<!--
+copie des logs
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.saveLogs">
+		<zip basedir="${rff.delivry.logs.location}" destfile="${rff.logs.location}/logs.zip" update="true"/>
+	</target>
+	<!--
+help
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.help">
+		<echo message="help "/>
+		<echo message="Syntax : "/>
+		<echo message="ant tomcat6.restore | tomcat6.saveBefore | tomcat6.saveAfter | tomcat6.buildByCopy | tomcat6.syncByCopy | tomcat6.saveLogs | tomcat6.start | tomcat6.stop"/>
+	</target>
+	<!--
+start tomcat
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.start">
+		<exec executable="${env.SystemRoot}/system32/sc.exe" failonerror="true" resultproperty="App.state">
+			<arg line="start ${rff.delivry.catalina.service}"/>
+		</exec>
+		<echo message="tomcat6.start.rc = ${App.state}"/>
+	</target>
+	<!--
+stop tomcat
+-->
+	<target depends="init,tomcat6.init" name="tomcat6.stop">
+		<exec executable="${env.SystemRoot}/system32/sc.exe" failonerror="false" resultproperty="App.state">
+			<arg line="stop ${rff.delivry.catalina.service}"/>
+		</exec>
+		<echo message="tomcat6.stop.rc = ${App.state}"/>
+	</target>
+	<!--  install service -->
+	<target depends="init,tomcat6.create,tomcat6.update" name="tomcat6.install"/>
+	<target depends="init,tomcat6.init" name="tomcat6.create">
+		<exec executable="${rff..catalina.home}/bin/tomcat6.exe" output="${rff.logs.location}/service.log">
+			<arg line="//IS//${rff.delivry.catalina.service} --Description=&quot;${rff.target.description}&quot; --DisplayName=${rff.delivry.catalina.service}"/>
+			<arg line="-Install=${rff..catalina.home}/bin/tomcat6.exe   --Jvm=&quot; &quot; "/>
+		</exec>
+	</target>
+	<target depends="init,tomcat6.init" name="tomcat6.update">
+		<exec append="yes" executable="${rff..catalina.home}/bin/tomcat6.exe" output="${rff.logs.location}/service.log">
+			<arg line="//US//${rff.delivry.catalina.service}"/>
+			<arg line="--StartMode=java --StopMode=java "/>
+			<arg line="--StartClass=org.apache.catalina.startup.Bootstrap --StartParams=start"/>
+			<arg line="--StartPath=&quot;${rff.delivry.instance.location}/work&quot;"/>
+			<arg line="--StopClass=org.apache.catalina.startup.Bootstrap --StopParams=stop"/>
+			<arg line="--StartPath=&quot;${rff.delivry.instance.location}/work&quot;"/>
+			<arg line="--StopPath=&quot;${rff.delivry.instance.location}/work&quot;"/>
+			<arg line="--Classpath=&quot;%JAVA_HOME%/lib/tools.jar;${rff..catalina.home}/bin/bootstrap.jar&quot;"/>
+			<arg line="--LogPath=&quot;${rff.target.logs.location}&quot;"/>
+			<arg line="--LogPrefix=commons-daemon"/>
+			<arg line="--StdOutput=&quot;${rff.target.logs.location}/stdout.log&quot;"/>
+			<arg line="--StdError=&quot;${rff.target.logs.location}/stderror.log&quot;"/>
+			<arg line="--PidFile=&quot;${rff.delivry.instance.location}/work/pidfile.pid&quot;"/>
+			<arg line="--JvmMs ${rff.target.catalina.JvmMs} --JvmMx ${rff.target.catalina.JvmMx} --JvmSs ${rff.target.catalina.JvmSs}"/>
+			<arg line="--JvmOptions -Dcatalina.home=&quot;${rff..catalina.home}&quot;;-Dcatalina.base=&quot;${rff.delivry.instance.location}&quot;;-Djava.endorsed.dirs=&quot;${rff.delivry.instance.location}/endorsed&quot;;-Djava.io.tmpdir=&quot;${rff.delivry.instance.location}/temp&quot;;-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager;-Djava.util.logging.config.file=&quot;${rff.delivry.instance.location}/conf/logging.properties&quot;"/>
+		</exec>
+	</target>
+	<target depends="init,tomcat6.init" name="tomcat6.delete">
+		<exec executable="${rff..catalina.home}/bin/tomcat6.exe" output="${rff.logs.location}/service.log">
+			<arg line="//DS//${rff.delivry.catalina.service}"/>
+		</exec>
+	</target>
+
+	<target name="check.is.tomcat.exist">
+		<condition property="tomcat.exist">
+			<available file="${rff.delivry.instance.location}" type="dir"/>
+		</condition>
+	</target>
+	<target name="tomcat6.init">
+		<mkdir dir="${rff.delivry.instance.location}/work"/>
+		<mkdir dir="${rff.delivry.instance.location}/temp"/>
+		<mkdir dir="${rff.delivry.instance.location}/bin"/>
+		<mkdir dir="${rff.delivry.instance.location}/data"/>
+		<mkdir dir="${rff.delivry.instance.location}/lib"/>
+	</target>
+</project>

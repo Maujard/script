@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project 	name="apache24" 
+			default="apache24.help" 
+			basedir="." 
+			xmlns:if="ant:if"
+			xmlns:unless="ant:unless" >
+
+
+	<description>"Apache24 Targets"</description>
+
+
+	<target name="apache24.saveBefore" depends="init,apache24.init" >
+		<delete dir="${working.saveBefore.location}"/>
+		<mkdir  dir="${working.saveBefore.location}"/>
+		<sync todir="${working.saveBefore.location}">
+			<fileset dir="${rff.target.applis.location}" >
+				<exclude name="temp/"/>
+			</fileset>
+		</sync>
+
+	</target>
+	<target name="apache24.init" >
+		<!-- tomcat6.instance.applis.location-->
+	</target>
+</project>
