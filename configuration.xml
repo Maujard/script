@@ -1,0 +1,150 @@
+﻿<project default=""  xmlns:props="antlib:org.apache.ant.props">
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	<typedef uri="antlib:org.apache.ant.props" resource="org/apache/ant/props/antlib.xml" classpath="ant-props-1.0Alpha.jar"/>
+	<propertyhelper><props:nested /></propertyhelper>
+	<target name="project.properties.map" depends="project.properties.init">
+
+		<!-- lire les definitions d'environement dans propertiesDefineByEnv ave l'environement definie dans deployment
+			@{propertyToFind} =  enviroment name
+			${@{propertyToFind}} = value
+			redefine rff.. to rff.${deploynemt}  : rff..something to rff.rec.something depend on ${deploynemt}
+		-->
+		<!-- resolve path for build and -->
+		<propertyfile file="${rff.componant.properties.temp}">
+			<entry  key="rff.target.name" value="$${${componant}.${role}.${name}.name}"/>
+			<entry  key="rff.target.instance.location" value="../${rff.target.name}/build"/>
+			<entry  key="rff.target.catalina.service" value="$${${componant}.${role}.${name}.service}"/>
+			<entry  key="rff.delivry.instance.location" value="$${${componant}.${role}.applis.location}"/>
+			<entry  key="rff.delivry.logs.location" value="$${${componant}.${role}.logs.location}"/>
+		</propertyfile>
+		<!-- global -->
+		<propertyselector property="propertiesDefine" match="^rff\.\.(.*)" select="\1"/>
+		<for list="${propertiesDefine}" param="propertyToFind">
+			<sequential>
+				<propertycopy property="@{propertyToFind}" from="rff..@{propertyToFind}" override="true" /> 
+
+				<propertyfile file="${rff.componant.properties.temp}">
+					<entry  key="@{propertyToFind}" value="${@{propertyToFind}}"/>
+				</propertyfile>
+				<echo message="propertycopy property=rff.@{propertyToFind} from=rff..@{propertyToFind}" />	
+
+			</sequential>
+		</for> 
+		<!-- remove deployment parameter  
+			redefine rff.${deployment}.${componant}.${role}.${name}   : 
+			rff.${deployment}.${componant}.${role}.${name} 
+		to 
+			rff.{componant}.${role}.${name}
+		-->
+		<propertyselector property="propertiesDefineByEnv" match="^rff.${deployment}\.(.*)" select="\1"/>
+
+		<for list="${propertiesDefineByEnv}" param="propertyToFind">
+			<sequential>
+				<propertycopy property="@{propertyToFind}" from="rff.${deployment}.@{propertyToFind}" override="true" /> 
+				<propertyfile file="${rff.componant.properties.temp}">
+					<entry  key="@{propertyToFind}" value="${@{propertyToFind}}" operation="="/>
+				</propertyfile>
+			</sequential>
+		</for>
+
+		<!--  objectif definir le parametre avec 1,2,3 en fin sur pas de fin et pasde fin sur 1
+		marche pas erreur dans le match primary  -->	<!-- apache.proxy.main.ip.primary=192.168.162.100 
+
+		<propertyselector property="propertiesDefineByEnv" match="^rff[.][.]([^.]*\.[^.]*\.[^.]*\.[^.]*)\.1" select="\1"/>
+				<for list="${propertiesDefineByEnv}" param="propertyToFind">
+					<sequential>
+					<echo message=" find  @{propertyToFind}" />
+					<propertyregex   property="new"  input="@{propertyToFind}"   regexp="([^.]*\.[^.]*\.[^.]*\.[^.]*)\.1" select="\1"  override="true" />
+					<echo message=" find  ${new}" /> 
+						<propertycopy property="${new}" from="rff..@{propertyToFind}" override="true" /> 
+						<propertyfile file="${rff.componant.properties.temp}">
+							<entry  key="${new}" value="${${new}}" operation="="/>
+						</propertyfile>
+					</sequential>
+				</for>
+				-->
+		<!--		
+<propertyselector property="propertiesDefineByEnv" match="^rff.${deployment}\.([^.]*\.[^.]*\.[^.]*\.[^.]*)\.1" select="\1"/>
+				<for list="${propertiesDefineByEnv}" param="propertyToFind">
+					<sequential>
+					<propertyregex   property="new"  input="@{propertyToFind}"   regexp="([^.]*\.[^.]*\.[^.]*\.[^.]*)\.1" select="\1"  override="true" />
+					<echo message=" find ${new}" /> 
+					
+						<propertycopy property="${new}" from="rff.${deployment}.${new}.1" override="true" /> 
+						<propertyfile file="${rff.componant.properties.temp}">
+							<entry  key="${new}" value="${${new}}" operation="="/>
+						</propertyfile>
+					</sequential>
+				</for>
+
+			<propertyselector property="propertiesDefineByEnv" match="^rff.${deployment}\.([a-zA-Z0-9]*\.[a-zA-Z0-9]*\.[a-zA-Z0-9]*\.[a-zA-Z0-9]*)=" select="\1"/>
+				<for list="${propertiesDefineByEnv}" param="propertyToFind">
+					<sequential>
+					<echo message=" find @{propertyToFind}" />
+						<propertycopy property="@{propertyToFind}" from="rff.${deployment}.@{propertyToFind}" override="true" /> 
+						<propertyfile file="${rff.componant.properties.temp}">
+							<entry  key="@{propertyToFind}.1" value="${@{propertyToFind}}" operation="="/>
+						</propertyfile>
+					</sequential>
+				</for>
+				-->			
+		<for list="1,2,3" param="indice" >
+			<sequential>
+				<propertyselector property="propertiesDefineByEnv" match="^rff.${deployment}(\..*\..*\..*\..*.@{indice})=" select="\1"/>
+				<for list="${propertiesDefineByEnv}" param="propertyToFind">
+					<sequential>
+						<propertycopy property="@{propertyToFind}" from="rff.${deployment}.@{propertyToFind}" override="true" /> 
+						<propertyfile file="${rff.componant.properties.temp}">
+							<entry  key="@{propertyToFind}" value="${@{propertyToFind}}" operation="="/>
+						</propertyfile>
+					</sequential>
+				</for>
+			</sequential>
+		</for>
+
+	</target>
+	<!--      create configuration file         -->
+	<target name="project.configuration.files"  >
+		<!-- intermediate configuration -->
+
+		<property name="rff.build.configuration.location.intermediate"  value="../${uniqueIdforcomponant}/configuration" />
+		<property name="rff.build.configuration.location"  value="../${rff.target.name}/configuration" />	
+		<delete dir="${rff.build.configuration.location.intermediate}" quiet="true" />
+		<mkdir  dir="${rff.build.configuration.location.intermediate}"  />
+
+		<!--
+		<echo message="{rff.build.configuration.location.intermediate} ${rff.build.configuration.location.intermediate}"/>
+		<echo message="{rff.build.configuration.location} ${rff.build.configuration.location}"/>
+		-->
+		<copy todir="${rff.build.configuration.location.intermediate}" includeEmptyDirs="true" >  
+			<fileset dir="${rff.build.configuration.location}" /> 
+			<filterset begintoken="@" endtoken="@" > 
+				<filtersfile file="${rff.componant.properties.temp}"/> 	
+			</filterset>			
+		</copy>
+		<for param="file">
+			<path>
+				<fileset dir="${rff.build.configuration.location.intermediate}">
+					<include name="**/*"/>
+				</fileset>
+			</path>
+			<sequential>
+				<touch file="@{file}" />
+			</sequential>
+		</for>
+
+	</target>
+	<target name="update.configuration.files" depends="project.configuration.files" >
+		<copy todir="${rff.target.instance.location}" overwrite="Yes" includeEmptyDirs="Yes" >  
+			<fileset dir="${rff.build.configuration.location.intermediate}" /> 
+		</copy>
+	</target>
+
+	<!-- local definition -->
+	<target name="project.properties.init" >
+		<delete file="${rff.componant.properties.temp}" />
+		<propertyfile file="${rff.componant.properties.temp}"  comment="Deployment for  ${project} rff ${deployment} ${componant} ${role}"/>
+	</target>
+
+</project>

@@ -1,25 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project 	name="apache24" 
-			default="apache24.help" 
-			basedir="." 
-			xmlns:if="ant:if"
-			xmlns:unless="ant:unless" >
-
-
-	<description>"Apache24 Targets"</description>
-
-
-	<target name="apache24.saveBefore" depends="init,apache24.init" >
-		<delete dir="${working.saveBefore.location}"/>
-		<mkdir  dir="${working.saveBefore.location}"/>
-		<sync todir="${working.saveBefore.location}">
-			<fileset dir="${rff.target.applis.location}" >
+<project basedir="." default="apache24.help" name="apache24" xmlns:if="ant:if" xmlns:unless="ant:unless">
+	<description>&quot;Apache24 Targets&quot;</description>
+	<target depends="apache24.buildBySync" name="apache24.publish"/>
+	<target depends="init,apache24.buildSync" name="apache24.buildBySync"/>
+	<!--
+synchronisation du répertoire de l'instance avec le contenue de build
+-->
+	<target depends="init,apache24.init" name="apache24.buildSync">
+		<echo message="from ${rff.target.build.location} to ${apache24.reverseProxy.applis.location} "/>
+		<sync overwrite="Yes" todir="${apache24.reverseProxy.applis.location}">
+			<fileset dir="${rff.target.build.location}"/>
+			<preserveintarget preserveEmptyDirs="Yes"/>
+		</sync>
+	</target>
+	<target depends="init,apache24.init" name="apache24.createUsers">
+		<mkdir dir="${rff.delivry.instance.location}/${apache24.reverseProxy.main.htpasswd.dir}"/>
+		<property location="${apache24.reverseProxy.main.htpasswd.ps1}" name="ps1"/>
+		<property location="./apache24/htpasswd.exe" name="exe"/>
+		<property location="${rff.target.extra.location}/${apache24.reverseProxy.main.htpasswd.file.in}" name="csv"/>
+		<property location="${rff.working.configuration.location}/${apache24.reverseProxy.main.htpasswd.dir}/${apache24.reverseProxy.main.htpasswd.file.out}" name="filename"/>
+		<exec error="${rff.working.log.location}/apache24createpassord.txt" executable="powershell.exe">
+			<arg value="-File"/>
+			<arg value="&quot;${ps1}&quot;"/>
+			<arg line="-exe &quot;${exe}&quot; -csv &quot;${csv}&quot; -filename &quot;${filename}&quot;"/>
+		</exec>
+		<loadfile property="mylog" srcFile="${rff.working.log.location}/apache24createpassord.txt"/>
+		<echo message="${mylog}"/>
+	</target>
+	<!-- installation binaires -->
+	<target depends="init,apache24.init" name="apache24.binary">
+		<unzip dest="${applis.location}" src="${rff.target.binary.location}/${apache24.binary.src}"/>
+	</target>
+	<!-- installation instance -->
+	<target depends="init,apache24.init" name="apache24.install">
+		<echo message=" install apache24 ${apache24.reverseProxy.applis.location}/bin/httpd.exe -k install -n ${apache24.reverseProxy.main.service}"/>
+		<exec error="${rff.working.log.location}/apache24install.txt" executable="${apache24.reverseProxy.applis.location}/bin/httpd.exe">
+			<arg line="-k install -n ${apache24.reverseProxy.main.service}"/>
+		</exec>
+	</target>
+	<!-- deinstallation instance -->
+	<target depends="init,apache24.init" name="apache24.uninstall">
+		<echo message=" uninstall apache24 sc.exe delete ${apache24.reverseProxy.main.service}"/>
+		<exec error="${rff.working.log.location}/apache24uninstall.txt" executable="sc.exe">
+			<arg line="delete ${apache24.reverseProxy.main.service}"/>
+		</exec>
+	</target>
+	<target depends="init,apache24.init" name="apache24.saveAfter">
+		<delete dir="${rff.working.saveAfter.location}"/>
+		<mkdir dir="${rff.working.saveAfter.location}"/>
+		<sync todir="${rff.working.saveAfter.location}">
+			<fileset dir="${rff.delivry.instance.location}">
 				<exclude name="temp/"/>
 			</fileset>
 		</sync>
-
 	</target>
-	<target name="apache24.init" >
-		<!-- tomcat6.instance.applis.location-->
+	<!--
+restauration de la apache24.saveBefore en  dans le répertoire de production de l'instance
+-->
+	<target depends="init,apache24.init" name="apache24.restore">
+		<sync includeEmptyDirs="Yes" overwrite="Yes" todir="${apache24.reverseProxy.applis.location}">
+			<fileset dir="${rff.working.saveBefore.location}/"/>
+			<preserveintarget preserveEmptyDirs="Yes"/>
+		</sync>
+	</target>
+	<target depends="init,apache24.init" name="apache24.saveBefore">
+		<delete dir="${rff.working.saveBefore.location}"/>
+		<mkdir dir="${rff.working.saveBefore.location}"/>
+		<sync todir="${rff.working.saveBefore.location}">
+			<fileset dir="${rff.delivry.instance.location}">
+				<exclude name="temp/"/>
+			</fileset>
+		</sync>
+	</target>
+	<!--
+copie des logs
+-->
+	<target depends="init,apache24.init" name="apache24.saveLogs">
+		<zip basedir="${apache24.reverseProxy.logs.location}" destfile="${rff.working.log.location}/logs.zip" update="true"/>
+	</target>
+	<target depends="init,apache24.init" name="apache24.start">
+		<exec executable="${env.SystemRoot}/system32/sc.exe" failonerror="true" resultproperty="App.state">
+			<arg line="start ${apache24.reverseProxy.main.service}"/>
+		</exec>
+		<echo message="apache24.start.rc = ${App.state}"/>
+	</target>
+	<target depends="init,apache24.init" name="apache24.stop">
+		<exec executable="${env.SystemRoot}/system32/sc.exe" failonerror="false" resultproperty="App.state">
+			<arg line="stop ${apache24.instance.main.service}"/>
+		</exec>
+		<echo message="apache24.stop.rc = ${App.state}"/>
+	</target>
+	<target name="apache24.init">
+		<mkdir dir="${apache24.reverseProxy.applis.location}"/>
+		<mkdir dir="${apache24.reverseProxy.logs.location}"/>
 	</target>
 </project>

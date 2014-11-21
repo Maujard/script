@@ -1,0 +1,1 @@
+ant  -Dproject=ws.gaia -Ddeployment=prd -Dcomponant=apache24 -Drole=reverseProxy -Dname=main  -Dhost=Application.1 %1%

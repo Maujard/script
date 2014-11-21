@@ -21,86 +21,9 @@
     <propertyregex input="${options}" property="host" regexp="^rff\.\w+\.\w+\.(\w+)\." select="\1"/>
     <echo message="resolve ${compagny}.${host}.${deployment}.${componant}.${role}.${name}"/>
     <!-- path to tempory projet directory for backup and configuration  ant -Dproject=gaia.ws -Ddeployment=rec -Dcomponant=tomcat6 -Drole=instance  -Dname=main-->
-    <property name="working" value="..\${compagny}.${host}.${deployment}.${componant}.${role}.${name}"/>
-    <mkdir dir="${working}"/>
-    <!-- logs -->
-    <property name="rff.logs.location" value="${working}/logs"/>
-    <mkdir dir="${rff.logs.location}"/>
-    <!-- trace ant in log  -->
-    <record append="yes" loglevel="verbose" name="${rff.logs.location}/ant.log"/>
-    <!-- properties files define -->
-    <!-- load projet properties file with arg inline -Dproject=gaia.ws  -->
-    <property name="working.properties.file" value="${working}/${project}.deployment.properties"/>
-    <property name="working.properties.temp.file" value="${working.properties.file}.temp"/>
-    <!-- files mapping map -->
-    <property name="working.saveBefore.location" value="${working}/saveBefore"/>
-    <property name="working.saveAfter.location" value="${working}/saveAfter"/>
-    <property name="working.configuration.location" value="${working}/configuration"/>
-    <delete dir="${working.configuration.location}"/>
-    <mkdir dir="${working.configuration.location}"/>
-    <delete file="${working.properties.temp.file}"/>
-    <propertyfile comment="Deployment for  ${project} rff ${host} ${deployment} ${componant} ${role}" file="${working.properties.temp.file}"/>
-    <!-- load project  properties -->
-    <property file="${project}.deployment.properties"/>
-    <!-- map propertie for macro @@   -->
-    <!-- catch deployment variable -->
-    <propertyselector match="^(rff\.\.[\w+\.]+\w+)" property="propertiesDefineBy" select="\1"/>
-    <for list="${propertiesDefineBy}" param="propertyToFind">
-        <sequential>
-            <propertyregex input="@{propertyToFind}" override="yes" property="pack" regexp="^rff\.\.(.*)" select="\1"/>
-            <propertyfile file="${working.properties.temp.file}">
-                <entry key="${pack}" value="${@{propertyToFind}}"/>
-            </propertyfile>
-        </sequential>
-    </for>
-    <propertyselector match="^(rff\.${deployment}\.[\w+\.]+\w+)" property="propertiesDefineByEnv" select="\1"/>
-    <for list="${propertiesDefineByEnv}" param="propertyToFind">
-        <sequential>
-            <propertyregex input="@{propertyToFind}" override="yes" property="pack" regexp="^rff\.[${deployment}]*\.(.*)" select="\1"/>
-            <propertyfile file="${working.properties.temp.file}">
-                <entry key="${pack}" value="${@{propertyToFind}}"/>
-            </propertyfile>
-        </sequential>
-    </for>
-    <copy file="${working.properties.temp.file}" tofile="${working.properties.file}">
-        <filterchain>
-            <sortfilter/>
-            <ignoreblank/>
-        </filterchain>
-    </copy>
-    <delete file="${working.properties.temp.file}"/>
-    <property file="${working.properties.file}"/>
-    <!-- load result for macro @@ -->
-    <property name="rff.target.name" value="${${componant}.${role}.${name}.name}"/>
-    <property name="rff.target.build.location" value="../${rff.target.name}/build"/>
-    <property name="rff.target.configuration.location" value="../${rff.target.name}/configuration"/>
-    <property name="rff.delivry.catalina.service" value="${${componant}.${role}.${name}.service}"/>
-    <property name="rff.delivry.instance.location" value="${${componant}.${role}.applis.location}"/>
-    <property name="rff.delivry.logs.location" value="${${componant}.${role}.logs.location}"/>
-    <mkdir dir="${rff.delivry.instance.location}"/>
-    <mkdir dir="${rff.delivry.logs.location}"/>
-    <echo message="* ****************** ${rff.target.configuration.location}  --- ${working.configuration.location}"/>
-    <copy includeEmptyDirs="true" todir="${working.configuration.location}">
-        <fileset dir="${rff.target.configuration.location}"/>
-        <filterset begintoken="@" endtoken="@">
-            <filtersfile file="${working.properties.file}"/>
-        </filterset>
-    </copy>
-    <for param="file">
-        <path>
-            <fileset dir="${working.configuration.location}">
-                <include name="**/*"/>
-            </fileset>
-        </path>
-        <sequential>
-            <touch file="@{file}"/>
-        </sequential>
-    </for>
-    <copy includeEmptyDirs="Yes" overwrite="Yes" todir="${rff.target.build.location}">
-        <fileset dir="${working.configuration.location}"/>
-    </copy>
-    <!--  initialize project -->
     <target name="init">
+        <!-- load project  properties -->
+        <property file="${project}.deployment.properties"/>
         <!-- temp parameter something to create ${Z} -->
         <property name="Z.compare" value="${rff.${deployment}.host.${host}.deployment}"/>
         <echo message="Z.compare = ${Z.compare}"/>
@@ -135,7 +58,102 @@
                 <fail message="check properties"/>
             </then>
         </if>
+        <property name="rff.working" value="..\${compagny}.${host}.${deployment}.${componant}.${role}.${name}"/>
+        <mkdir dir="${rff.working}"/>
+        <!-- logs -->
+        <property name="rff.working.log.location" value="${rff.working}/logs"/>
+        <mkdir dir="${rff.working.log.location}"/>
+        <!-- trace ant in log  -->
+        <record append="yes" loglevel="info" name="${rff.working.log.location}/ant.log"/>
+        <!-- properties files define -->
+        <!-- load projet properties file with arg inline -Dproject=gaia.ws  -->
+        <property name="rff.working.properties.file" value="${rff.working}/${project}.deployment.properties"/>
+        <property name="rff.working.properties.temp.file" value="${rff.working.properties.file}.temp"/>
+        <!-- files mapping map -->
+        <property name="rff.working.saveBefore.location" value="${rff.working}/saveBefore"/>
+        <property name="rff.working.saveAfter.location" value="${rff.working}/saveAfter"/>
+        <property name="rff.working.configuration.location" value="${rff.working}/configuration"/>
+        <delete dir="${rff.working.configuration.location}"/>
+        <mkdir dir="${rff.working.configuration.location}"/>
+        <delete file="${rff.working.properties.temp.file}"/>
+        <propertyfile comment="Deployment for  ${project} rff ${host} ${deployment} ${componant} ${role}" file="${rff.working.properties.temp.file}"/>
+        <!-- map propertie for macro @@   -->
+        <!-- catch deployment variable -->
+        <propertyselector match="^(rff\.\.[\w+\.]+\w+)" property="propertiesDefineBy" select="\1"/>
+        <for list="${propertiesDefineBy}" param="propertyToFind">
+            <sequential>
+                <propertyregex input="@{propertyToFind}" override="yes" property="pack" regexp="^rff\.\.(.*)" select="\1"/>
+                <propertyfile file="${rff.working.properties.temp.file}">
+                    <entry key="${pack}" value="${@{propertyToFind}}"/>
+                </propertyfile>
+            </sequential>
+        </for>
+        <propertyselector match="^(rff\.${deployment}\.[\w+\.]+\w+)" property="propertiesDefineByEnv" select="\1"/>
+        <for list="${propertiesDefineByEnv}" param="propertyToFind">
+            <sequential>
+                <propertyregex input="@{propertyToFind}" override="yes" property="pack" regexp="^rff\.[${deployment}]*\.(.*)" select="\1"/>
+                <propertyfile file="${rff.working.properties.temp.file}">
+                    <entry key="${pack}" value="${@{propertyToFind}}"/>
+                </propertyfile>
+            </sequential>
+        </for>
+        <copy file="${rff.working.properties.temp.file}" tofile="${rff.working.properties.file}">
+            <filterchain>
+                <sortfilter/>
+                <ignoreblank/>
+            </filterchain>
+        </copy>
+        <delete file="${rff.working.properties.temp.file}"/>
+        <property file="${rff.working.properties.file}"/>
+        <!-- load result for macro @@ -->
+        <property name="rff.target.name" value="${${componant}.${role}.${name}.name}"/>
+        <property name="rff.target.build.location" value="../${rff.target.name}/build"/>
+        <property name="rff.target.binary.location" value="../${rff.target.name}/binary"/>
+        <property name="rff.target.configuration.location" value="../${rff.target.name}/configuration"/>
+        <property name="rff.target.extra.location" value="../${rff.target.name}/extra"/>
+        <!--<property name="rff.delivry.catalina.service" value="${${componant}.${role}.${name}.service}"/>-->
+        <property name="rff.delivry.home.location" value="${${componant}.home}"/>
+        <property name="rff.delivry.instance.location" value="${${componant}.${role}.applis.location}"/>
+        <property name="rff.delivry.logs.location" value="${${componant}.${role}.logs.location}"/>
+        <mkdir dir="${rff.delivry.instance.location}"/>
+        <mkdir dir="${rff.delivry.logs.location}"/>
+        <!--<echo message="* ****************** ${rff.target.configuration.location}   ${rff.working.configuration.location}"/>-->
+        <copy includeEmptyDirs="true" todir="${rff.working.configuration.location}">
+            <fileset dir="${rff.target.configuration.location}"/>
+            <filterset begintoken="@" endtoken="@">
+                <filtersfile file="${rff.working.properties.file}"/>
+            </filterset>
+        </copy>
+        <for param="file">
+            <path>
+                <fileset dir="${rff.working.configuration.location}">
+                    <include name="**/*"/>
+                </fileset>
+            </path>
+            <sequential>
+                <touch file="@{file}"/>
+            </sequential>
+        </for>
+	<echo message="copy map file to build  : ${rff.working.configuration.location} to ${rff.target.build.location}" />
+      
+	   <copy includeEmptyDirs="Yes" overwrite="Yes" todir="${rff.target.build.location}">
+            <fileset dir="${rff.working.configuration.location}"/>
+        </copy>
+<echo message="copy map file to build  done : ${rff.working.configuration.location} to ${rff.target.build.location}" />
+        <!--  initialize project -->
     </target>
+    <!--
+liste des objects
+-->
+
+    <target depends="init" name="dir">
+        <echo message=" dir /s ${rff.delivry.instance.location}"/>
+        <exec executable="cmd" output="${rff.working.log.location}/list.txt">
+            <arg value="/c"/>
+            <arg value="DIR /s &quot;${rff.delivry.instance.location}&quot;"/>
+        </exec>
+    </target>
+
     <target depends="init" name="help">
         <!--<echoproperties />-->
         <echo message=" ant -Dproject=${project} -Ddeployment=${deployment} -Dcomponant=${componant} -Drole=${role}  -Dname=${name} -Dhost=${host} "/>
