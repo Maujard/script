@@ -46,31 +46,16 @@ synchronisation du répertoire de l'instance avec le contenue de build
 		</exec>
 	</target>
 	<target depends="init,apache24.init" name="apache24.saveAfter">
-		<delete dir="${rff.working.saveAfter.location}"/>
-		<mkdir dir="${rff.working.saveAfter.location}"/>
-		<sync todir="${rff.working.saveAfter.location}">
-			<fileset dir="${rff.delivry.instance.location}">
-				<exclude name="temp/"/>
-			</fileset>
-		</sync>
+		<common.saveAfter/>
 	</target>
 	<!--
 restauration de la apache24.saveBefore en  dans le répertoire de production de l'instance
 -->
 	<target depends="init,apache24.init" name="apache24.restore">
-		<sync includeEmptyDirs="Yes" overwrite="Yes" todir="${apache24.reverseProxy.applis.location}">
-			<fileset dir="${rff.working.saveBefore.location}/"/>
-			<preserveintarget preserveEmptyDirs="Yes"/>
-		</sync>
+		<common.restore/>
 	</target>
 	<target depends="init,apache24.init" name="apache24.saveBefore">
-		<delete dir="${rff.working.saveBefore.location}"/>
-		<mkdir dir="${rff.working.saveBefore.location}"/>
-		<sync todir="${rff.working.saveBefore.location}">
-			<fileset dir="${rff.delivry.instance.location}">
-				<exclude name="temp/"/>
-			</fileset>
-		</sync>
+		<common.saveBefore/>
 	</target>
 	<!--
 copie des logs
